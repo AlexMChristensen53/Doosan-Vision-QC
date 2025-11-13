@@ -83,7 +83,7 @@ python vision/main.py
 
 ---
 
-## Git Workflow [(refer to GitHub Workflow.docs on google drive)](https://docs.google.com/document/d/1TSOkabhG66mFjT1kPjO0tYmKt7WV0dke9f8nmHOzbDQ/edit?usp=drive_link)
+## [Git Workflow](https://docs.google.com/document/d/1TSOkabhG66mFjT1kPjO0tYmKt7WV0dke9f8nmHOzbDQ/edit?usp=drive_link)
 - Always pull before making changes.
 - Use feature branches for new functionality.
 - Commit small, clear changes.
