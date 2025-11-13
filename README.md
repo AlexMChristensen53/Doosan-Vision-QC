@@ -15,8 +15,8 @@ Doosan-Vision-QC/
 │  ├─ main.py               # Main program (idle loop, detection, robot output)
 │  ├─ camera.py             # OAK-D camera interface
 │  ├─ processing.py         # Object detection and QC logic
-│  ├─ robot_comms.py        # TCP/IP communication to Doosan robot
-│  └─ __init__.py
+│  └─ robot_comms.py        # TCP/IP communication to Doosan robot
+│  
 │
 ├─ robot/
 │  ├─ doosan-programs/      # Robot-side programs/scripts
