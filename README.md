@@ -8,13 +8,15 @@ and provide coordinates and classifications to the robot for automated sorting.
 ---
 
 ## Project Structure
+
+```text
 Doosan-Vision-QC/
 ├─ vision/
 │  ├─ main.py               # Main program (idle loop, detection, robot output)
 │  ├─ camera.py             # OAK-D camera interface
 │  ├─ processing.py         # Object detection and QC logic
-│  └─ robot_comms.py        # TCP/IP communication to Doosan robot
-│ 
+│  ├─ robot_comms.py        # TCP/IP communication to Doosan robot
+│  └─ __init__.py
 │
 ├─ robot/
 │  ├─ doosan-programs/      # Robot-side programs/scripts
@@ -34,6 +36,7 @@ Doosan-Vision-QC/
 ├─ .gitignore               # Python gitignore
 ├─ requirements.txt         # Python dependencies
 └─ README.md
+
 
 ---
 
