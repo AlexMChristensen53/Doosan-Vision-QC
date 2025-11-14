@@ -42,27 +42,10 @@ Doosan-Vision-QC/
 
 ## Quick Start
 
-### 1. Create a virtual environment (recommended)
-Windows:
-bash
-py -3 -m venv venv
-venv\Scripts\activate
 
-
-Linux / Mac:
-bash
-python3 -m venv venv
-source venv/bin/activate
-
-
-### 2. Install dependencies
+### 1. Install dependencies
 bash
 pip install -r requirements.txt
-
-
-### 3. Run the project
-bash
-python vision/main.py
 
 
 ---
