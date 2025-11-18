@@ -1,8 +1,8 @@
 import socket
 import threading
 
-HOST = "192.168.137.51"  # The server's hostname or IP address
-PORT = 20002  # The port used by the server
+HOST = "192.168.137.51"  # Server (Doosan Robot) IP
+PORT = 20002  # Server Port
 
 def send_commands(s):
     """Funktion til at sende kommandoer til serveren"""
@@ -11,7 +11,7 @@ def send_commands(s):
             command = input("Indtast kommando (f.eks. MOVEL): ").strip()
             print(f"  [INPUT DEBUG] Modtaget: '{command}'")
             if command:
-                # Hvis det er en MOVEL kommando, tilføj de sidste 3 cifre automatisk
+                # Tilføjer automatisk de sidste 3 cifre til MOVEL commands
                 parts = command.split()
                 if parts and parts[0] == "MOVEL":
                     if len(parts) == 4:
@@ -20,7 +20,7 @@ def send_commands(s):
                     else:
                         print(f"  Kommando IKKE udvidet - der er {len(parts)-1} talværdier (forventet 3)")
                 
-                # Tilføj \r\n (carriage return + line feed) - som Hercules bruger
+                # Tilføj \r\n (carriage return + line feed) så formatet matcher Hercules
                 if not command.endswith('\r\n'):
                     command += '\r\n'
                 command_bytes = command.encode()
