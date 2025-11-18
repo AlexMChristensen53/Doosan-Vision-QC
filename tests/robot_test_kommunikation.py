@@ -9,15 +9,23 @@ def send_commands(s):
     try:
         while True:
             command = input("Indtast kommando (f.eks. MOVEL): ").strip()
+            print(f"  [INPUT DEBUG] Modtaget: '{command}'")
             if command:
+                # Hvis det er en MOVEL kommando, tilføj de sidste 3 cifre automatisk
+                parts = command.split()
+                if parts and parts[0] == "MOVEL":
+                    if len(parts) == 4:
+                        command = f"{command} -25 0 0"
+                        print(f"  ✓ Kommando udvidet til: {command}")
+                    else:
+                        print(f"  Kommando IKKE udvidet - der er {len(parts)-1} talværdier (forventet 3)")
+                
                 # Tilføj \r\n (carriage return + line feed) - som Hercules bruger
                 if not command.endswith('\r\n'):
                     command += '\r\n'
                 command_bytes = command.encode()
                 s.sendall(command_bytes)
                 print(f"✓ Sendt: {command.strip()}")
-                print(f"  Debug - Bytes sendt: {command_bytes}")
-                print(f"  Debug - Hex: {command_bytes.hex()}")
     except EOFError:
         pass
     except Exception as e:
