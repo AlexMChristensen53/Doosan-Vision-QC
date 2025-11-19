@@ -2,7 +2,7 @@ import os
 import numpy as np
 import cv2 as cv
 
-BILLED_MAPPE = os.path.join(os.path.dirname(__file__), "billeder")
+BILLED_MAPPE = os.path.join(os.path.dirname(__file__), "Sample_Images")
 
 def load_image(filename):
     """Always loads images from the 'billeder' folder."""
