@@ -8,84 +8,112 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 PICTURE_FOLDER = PROJECT_ROOT / "data" / "Sample_images"
 
 
-def load_image(filename):
-    """Always loads images from path in variable "PICTURE_FOLDER"
+def load_image(filename: str) -> np.ndarray:
+    """Loads an image from the PICTURE_FOLDER directory.
+
+    Args:
+        filename (str): Name of the image file to load ("Sample1.jpg").
+
+    Returns:
+        NumPy: The loaded image in BGR format.
+        
+    Raises:
+        AssertionError: if the image file cannot be found or loaded.
     """
     path = PICTURE_FOLDER / filename
-    img = cv.imread(path)
+    img = cv.imread(str(path))
     assert img is not None, f"Could not read image: {path}"
     return img
 
-def rescalePicture(frame, scale=0.4):
-    """Rescales the picture
+
+def rescalePicture(frame: np.ndarray, scale: float = 0.4) -> np.ndarray:
+    """Rescales the image based on the scale factor.
 
     Args:
-        frame (_type_): jpg, png
-        scale (float, optional): Change this value depending on rescale needs. Defaults to 0.4.
+        frame (np.ndarray): Input image loaded by OpenCV.
+        scale (float, optional): 
+            Values <1 shrink the image, values >1 enlarge it.
+            Defaults to 0.4.
 
     Returns:
-        _type_: jpg, png
+        NumPy: The resized image.
     """
     width = int(frame.shape[1] * scale)
     height = int(frame.shape[0] * scale)
-    
-    dimensions = (width,height)
-    
-    return cv.resize(frame, dimensions, interpolation=cv.INTER_AREA)
+    return cv.resize(frame, (width, height), interpolation=cv.INTER_AREA)
 
-img = load_image("Sample2.jpg")
-resized_image = (rescalePicture(img))
-h, w = img.shape[:2]
-Picture_size_text = f"{h} x {w}"
-font = cv.FONT_ITALIC
 
-cv.putText(resized_image,
-           f"Image Size: {Picture_size_text}px",
-           (10,30), 
-           font, 1,(255,255,255),2,cv.LINE_AA)
-cv.imshow("Sample2", resized_image)
-
-drawing = False # true if mouse is pressed
-mode = True # if True, draw rectangle.
+# -------------------------------
+# DRAWING FUNCTION
+# -------------------------------
+drawing = False
+mode = True
 ix, iy = -1, -1
+original = None
+overlay = None
 
-original = resized_image.copy()
-overlay = resized_image.copy()
 
 def draw_rectangle(event, x, y, flags, param):
+    """Mouse callback used to draw rectangles interactively on an image."""
     global ix, iy, drawing, mode, original, overlay
-    
+
     if not mode:
         return
-    
+
     if event == cv.EVENT_LBUTTONDOWN:
         drawing = True
         ix, iy = x, y
-        
+
     elif event == cv.EVENT_MOUSEMOVE and drawing:
+        if original is None:
+            return
         overlay = original.copy()
         cv.rectangle(overlay, (ix, iy), (x, y), (255, 0, 0), 3)
-                
+
     elif event == cv.EVENT_LBUTTONUP and drawing:
         drawing = False
-        cv.rectangle(original, (ix, iy), (x, y),(255,0,0), 3)
+        if original is None:
+            return
+        cv.rectangle(original, (ix, iy), (x, y), (255, 0, 0), 3)
         overlay = original.copy()
-                
-cv.namedWindow("Sample2")
-cv.setMouseCallback("Sample2", draw_rectangle)
 
-while True:
-    cv.imshow("Sample2", overlay)
-    k = cv.waitKey(1) & 0xFF
-    if k == ord("m"):
-        mode = not mode
-    elif k == 27:
-        break
+
+# -------------------------------
+# DEMO CODE
+# -------------------------------
+def main():
+    """Demo code to test the tools in this module."""
+
+    global original, overlay, img, resized_image, h, w
+
+    img = load_image("Sample2.jpg")
+    resized_image = rescalePicture(img)
+    h, w = img.shape[:2]
+
     
-cv.destroyAllWindows()
+    text = f"Image Size: {h} x {w}px"
+    cv.putText(resized_image, text, (10, 30), cv.FONT_ITALIC,
+               1, (255, 255, 255), 2, cv.LINE_AA)
 
-print(img.shape)
-if len(img.shape) == 3:
-    print("Color image (BGR)")
-else:
-    print("Grayscale image")
+    original = resized_image.copy()
+    overlay = resized_image.copy()
+
+    cv.namedWindow("Sample2")
+    cv.setMouseCallback("Sample2", draw_rectangle)
+
+    # Main loop
+    while True:
+        cv.imshow("Sample2", overlay)
+        k = cv.waitKey(1) & 0xFF
+        if k == ord("m"):
+            mode = not mode
+        elif k == 27:
+            break
+
+    cv.destroyAllWindows()
+
+    print(img.shape)
+    print("Color image (BGR)" if len(img.shape) == 3 else "Grayscale image")
+
+if __name__ == "__main__":
+    main()
