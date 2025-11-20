@@ -4,8 +4,8 @@ import cv2 as cv
 
 # Variables to locate "Sample_images" folder
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent
-PICTURE_FOLDER = PROJECT_ROOT / "data" / "Sample_images"
+PROJECT_ROOT = SCRIPT_DIR.parents[1]
+PICTURE_FOLDER = PROJECT_ROOT / "03_data" / "Sample_images"
 
 
 def load_image(filename: str) -> np.ndarray:
