@@ -9,22 +9,26 @@ def send_commands(s):
     """Funktion til at sende kommandoer til serveren"""
     try:
         while True:
-            command = input("Indtast kommando (f.eks. MOVEL): ").strip()
+            command = input("Indtast kommando (MOVEL eller POPUPn,w,a): ").upper().strip()
             if command:
                 # Tilføjer automatisk de sidste 3 cifre til MOVEL commands
                 parts = command.split()
                 if parts and parts[0] == "MOVEL":
                     if len(parts) == 4:
                         command = f"{command} -25 0 0"
-                
+                elif parts and parts[0].startswith("POPUP"):
+                    # Kombiner POPUP kommandoen og teksten i én besked
+                    popup_type = parts[0][5:]  # Ekstraher 'n', 'w', eller 'a'
+                    popup_message = " ".join(parts[1:])
+                    if popup_type and popup_message:
+                        full_popup_command = f"POPUP{popup_type} {popup_message}\r\n"
+                        s.sendall(full_popup_command.encode())
                 # Tilføj \r\n (carriage return + line feed) så formatet matcher Hercules
                 if not command.endswith('\r\n'):
                     command += '\r\n'
                 command_bytes = command.encode()
                 s.sendall(command_bytes)
                 print(f"✓ Sendt: {command.strip()}")
-    except EOFError:
-        pass
     except Exception as e:
         print(f"Fejl ved sending af kommando: {e}")
 
@@ -36,9 +40,6 @@ def receive_data(s):
             if not data:
                 print("Forbindelsen blev lukket af serveren.")
                 break
-            # Skriv modtaget data og genskab prompten
-            sys.stdout.write(f"\rModtaget: {data!r}\nIndtast kommando (f.eks. MOVEL): ")
-            sys.stdout.flush()
     except Exception as e:
         print(f"Fejl ved modtagelse: {e}")
 
