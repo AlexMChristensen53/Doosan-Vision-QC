@@ -32,11 +32,10 @@ def rotation(img, angle, rotPoint=None):
     RotationMatrix = cv.getRotationMatrix2D(rotPoint, angle, 1.0 )
     dimensions = (width, height)
     
-    return cv.warpAffine(resized_img, RotationMatrix, dimensions)
+    return cv.warpAffine(img, RotationMatrix, dimensions)
 
 rotated = rotation(resized_img, 45)
 cv.imshow("rotated", rotated)
-cv.waitKey(0)
 
 
 
