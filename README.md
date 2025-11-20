@@ -9,11 +9,16 @@ and provide coordinates and classifications to the robot for automated sorting.
 
 ## Quick Start
 
+### Python Version
+This project requires **Python 3.11**.  
+Python 3.12+ is not supported due to DepthAI compatibility issues.
+
 ### 1. Create a virtual environment
 
 **Windows**
-python -m venv venv
-venv\Scripts\activate
+1. python -m venv venv
+2. Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+3. .\venv\Scripts\activate
 
 ### 2. Install dependencies
 pip install -r requirements.txt
