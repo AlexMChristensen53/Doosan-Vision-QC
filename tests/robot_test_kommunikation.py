@@ -1,6 +1,8 @@
 import socket
 import threading
 import sys
+import time
+import sys
 
 HOST = "192.168.137.51"  # Server (Doosan Robot) IP
 PORT = 20002  # Server Port
@@ -42,14 +44,56 @@ def receive_data(s):
     except Exception as e:
         print(f"Fejl ved modtagelse: {e}")
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
-    print(f"✓ Succesfuldt forbundet til Doosan socket server på {HOST}:{PORT}")
-    s.sendall(b"Connected to SUSAN\n")
-    
-    # Start tråd til at modtage data
-    receive_thread = threading.Thread(target=receive_data, args=(s,), daemon=True)
-    receive_thread.start()
-    
-    # Start tråd til at sende kommandoer
-    send_commands(s)
+def main():
+    s = None
+    backoff = 1.0
+    try:
+        # Prøv at forbinde indtil det lykkes
+        while True:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(5.0)
+                s.connect((HOST, PORT))
+                s.settimeout(None)
+                print(f"✓ Succesfuldt forbundet til Doosan socket server på {HOST}:{PORT}")
+                # Send initial besked (kan bruge \n her)
+                try:
+                    s.sendall(b"Connected to SUSAN\n")
+                except Exception:
+                    pass
+                break
+            except KeyboardInterrupt:
+                print("\nAnnulleret af bruger før forbindelse blev etableret.")
+                if s:
+                    s.close()
+                return
+            except Exception as e:
+                print(f"Kunne ikke forbinde til {HOST}:{PORT} ({e}). Prøver igen om {backoff:.1f}s...")
+                try:
+                    s.close()
+                except Exception:
+                    pass
+                time.sleep(backoff)
+                backoff = min(backoff * 2, 30.0)
+
+    except Exception as e:
+        print(f"Uventet fejl under forbindelse: {e}")
+        if s:
+            s.close()
+        return
+
+    # Når forbundet: start receiver og sender
+    try:
+        receive_thread = threading.Thread(target=receive_data, args=(s,), daemon=True)
+        receive_thread.start()
+        send_commands(s)
+    except KeyboardInterrupt:
+        print("\nAfslutter programmet (KeyboardInterrupt)")
+    finally:
+        try:
+            s.close()
+        except Exception:
+            pass
+
+if __name__ == "__main__":
+    main()
