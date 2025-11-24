@@ -16,7 +16,7 @@ Python 3.12+ is not supported due to DepthAI compatibility issues.
 ### 1. Create a virtual environment
 
 **Windows**
-1. python -m venv venv
+1. python -3.11 -m venv venv
 2. Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 3. .\venv\Scripts\activate
 
