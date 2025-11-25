@@ -2,14 +2,21 @@ import cv2 as cv
 import depthai as dai
 import numpy as np
 #from transformations import rotation
+from pathlib import Path
+import matplotlib.pyplot as plt
 import time
+
+# Variables to locate "Sample_images" folder
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parents[1]
+PICTURE_FOLDER = PROJECT_ROOT / "03_data" / "Sample_images"
 
 focus_value = 150
 
 pipeline = dai.Pipeline()
 
-x1, x2 = 100, 500
-y1, y2 = 100, 500
+x1, x2 = 380, 1478
+y1, y2 = 143, 872
 
 cam = pipeline.createColorCamera()
 cam.setIspScale(1, 1)
@@ -29,37 +36,43 @@ with dai.Device(pipeline) as device:
     ControlQueue = device.getInputQueue(name="Control")
     
     ctrl = dai.CameraControl()
-    ctrl.setManualFocus(50)
+    ctrl.setManualFocus(130)
     ControlQueue.send(ctrl)
 
     print(f"Initial Focus Value: ", focus_value)
 
     while True:
         frame = q.get().getCvFrame()
-        cv.imshow("Livefeed, rotated", frame)
-        mask = np.zeros(frame.shape[:2], dtype="uint8")
+        raw_frame = frame.copy()
+        work_frame = frame.copy()
         
-        cv.rectangle(mask, (x1, y1), (x2, y2), 255, -1)
+        cv.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
         
-        ROI = cv.bitwise_and(frame, frame, mask=mask)
+        ROI = frame[y1:y2, x1:x2]
         
         focus_value = max(0, min(focus_value, 255))
         
-        cv.imshow("ROI", ROI)
+        cv.imshow("Livefeed, rotated", frame)
 
-        key = cv.waitKey(1)
+        key = cv.waitKey(1) & 0xFF
+
+        if key == ord('s'):
+            filename = PICTURE_FOLDER / f"frame_{int(time.time()*1000)}.png"
+            cv.imwrite(str(filename), raw_frame)
+            print("Saved:", filename)
+
         
         if key == ord("."):
             focus_value += 5
             ctrl = dai.CameraControl()
-            ctrl.setManualFocus(50)
+            ctrl.setManualFocus(130)
             ControlQueue.send(ctrl)
             print(f"New Focus Value: ", focus_value)
             
         elif key == ord(","):
             focus_value -= 5
             ctrl = dai.CameraControl()
-            ctrl.setManualFocus(50)
+            ctrl.setManualFocus(130)
             ControlQueue.send(ctrl)
             print(f"New Focus Value: ", focus_value)
         
