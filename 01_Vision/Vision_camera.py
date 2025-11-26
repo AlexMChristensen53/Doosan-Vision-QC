@@ -37,7 +37,7 @@ class OakCamera:
         frame = self.q_video.tryGet()
         if frame is None:
             return None
-        return frame.getcvFrame()
+        return frame.getCvFrame()
 
 
 if __name__ == "__main__":
