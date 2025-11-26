@@ -145,19 +145,19 @@ def vision_settings(source: str = "image",
         cv.drawContours(overlay, big_contours, -1, (0, 0, 255), 2)
 
         # Tilføj: center-prikker for hvert contour (baseret på moments)
-for cnt in big_contours:
-    M = cv.moments(cnt)
+        for cnt in big_contours:
+            M = cv.moments(cnt)
 
-    if M["m00"] != 0:     # sikrer at der er areal nok til at beregne center
-        cx = int(M["m10"] / M["m00"])
-        cy = int(M["m01"] / M["m00"])
+            if M["m00"] != 0:     # sikrer at der er areal nok til at beregne center
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
 
-        # tegn center-prik
-        cv.circle(overlay, (cx, cy), 4, (0, 255, 255), -1)
+                # tegn center-prik
+                cv.circle(overlay, (cx, cy), 4, (0, 255, 255), -1)
 
-    else:
-        # Contour har for lille areal eller er en linje → ingen centroid
-        pass
+            else:
+                # Contour har for lille areal eller er en linje → ingen centroid
+                pass
 
         # Debug print
         print(f"\rContours: {len(big_contours)} | "
