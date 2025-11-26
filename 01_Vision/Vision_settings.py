@@ -48,7 +48,7 @@ def create_trackbars(window_name: str) -> None:
     cv.createTrackbar("V high", window_name, 255, 255, nothing)
 
 
-def get_frame(source: str, filename: str | None, camera: "OakCamera | None"):
+def get_frame(source: str, filename: str | None, camera: OakCamera | None):
     """gets frame."""
     if source == "image":
         return load_image(filename)
