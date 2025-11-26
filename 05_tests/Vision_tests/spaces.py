@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from rescale_size_drawing import load_image
 from rescale_size_drawing import rescalePicture
 
-img = load_image("Sample2.jpg")
+img = load_image("frame_1764079701216.png")
 img = rescalePicture(img, scale=0.2)
 
 # BGR to Grayscale
