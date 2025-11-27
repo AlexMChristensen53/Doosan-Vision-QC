@@ -1,7 +1,7 @@
 import depthai as dai
 import cv2 as cv
 import numpy as np
-
+from Vision_tools import rotation
 
 class OakCamera:
     def __init__(self, resolution=(1080, 1080)):
@@ -46,6 +46,7 @@ if __name__ == "__main__":
     while True:
         frame = cam.get_frame()
         if frame is not None:
+            frame = rotation(frame, 180)
             cv.imshow("OAK-D Live", frame)
 
         if cv.waitKey(1) & 0xFF == ord('q'):
