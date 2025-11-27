@@ -4,7 +4,7 @@ import numpy as np
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parents[0]
-IMAGE_DIR = PROJECT_ROOT / "03_data" / "Sample_images"
+IMAGE_DIR = PROJECT_ROOT / "C_data" / "Sample_images"
 
 # Loads capture or stored frame
 def load_image(filename):
