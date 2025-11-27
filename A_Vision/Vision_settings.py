@@ -1,102 +1,86 @@
 from __future__ import annotations
 import cv2 as cv
 import numpy as np
+import json
+from Vision_tools import load_image
+from Vision_camera import OakCamera
 
-from Vision_tools import load_image, downscale
+SETTINGS_FILE = "calibration_settings.json"
 
-
-try:
-    from Vision_camera import OakCamera
-    OAK_AVAILABLE = True
-except ImportError:
-    OakCamera = None
-    OAK_AVAILABLE = False
-
-
-def nothing(_):
-    """Dummy for trackbars."""
+def nothing(_): 
     pass
 
 
-def create_trackbars(window_name: str) -> None:
-    """Creates all trackbars in a single 'control' window."""
-
+def create_trackbars(window_name: str):
+    """Creates trackbars with correct and consistent names."""
+    
     cv.namedWindow(window_name, cv.WINDOW_NORMAL)
 
-    # Display scale
-    cv.createTrackbar("scale %", window_name, 40, 100, nothing) 
+    cv.createTrackbar("scale %", window_name, 40, 100, nothing)
 
-    # Blur kernel size
-    cv.createTrackbar("blur k", window_name, 5, 31, nothing) 
+    cv.createTrackbar("blur k", window_name, 5, 31, nothing)
 
-    # Threshold value
     cv.createTrackbar("thresh", window_name, 120, 255, nothing)
-
-    # Canny edges
     cv.createTrackbar("canny low", window_name, 50, 255, nothing)
     cv.createTrackbar("canny high", window_name, 150, 255, nothing)
 
-    # Min contour area
-    cv.createTrackbar("min area", window_name, 200, 10000, nothing)
+    cv.createTrackbar("min area", window_name, 40, 1000, nothing)
 
-    # HSV range
-    cv.createTrackbar("H low", window_name, 0, 179, nothing)
-    cv.createTrackbar("H high", window_name, 179, 179, nothing)
-    cv.createTrackbar("S low", window_name, 0, 255, nothing)
+    cv.createTrackbar("H low", window_name, 18, 179, nothing)
+    cv.createTrackbar("H high", window_name, 32, 179, nothing)
+    cv.createTrackbar("S low", window_name, 120, 255, nothing)
     cv.createTrackbar("S high", window_name, 255, 255, nothing)
-    cv.createTrackbar("V low", window_name, 0, 255, nothing)
+    cv.createTrackbar("V low", window_name, 120, 255, nothing)
     cv.createTrackbar("V high", window_name, 255, 255, nothing)
 
 
-def get_frame(source: str, filename: str | None, camera: OakCamera | None):
-    """gets frame."""
+def get_frame(source: str, filename: str, camera: OakCamera | None):
+    """Returns frame from image or camera."""
+    
     if source == "image":
         return load_image(filename)
 
     if source == "camera":
-        if not OAK_AVAILABLE or camera is None:
-            raise RuntimeError("Camera mode selected but OakCamera is not available.")
+        if camera is None:
+            raise RuntimeError("Camera mode selected but no camera found.")
         return camera.get_frame()
 
-    raise ValueError(f"Invalid source: {source}")
+    raise ValueError("Invalid source type.")
 
 
 def vision_settings(source: str = "image",
-                 filename: str | None = None) -> None:
+                    filename: str | None = None):
     """
-    trackbar window used to adjust settings for:
-      - scale, blur, threshold, canny, hsv mask, min area.
-    Press 'q' or ESC to quit.
+    GUI tool with trackbars for adjusting HSV/color settings.
+    Press 'S' to save settings → calibration_settings.json
+    Press 'Q' or ESC to exit
     """
+    camera = OakCamera() if source == "camera" else None
 
-    camera = OakCamera() if (source == "camera" and OAK_AVAILABLE) else None
+    if source == "image":
+        if filename is None:
+            raise ValueError("filename is required in image mode.")
+
+        base_frame = load_image(filename)
 
     control_window = "controls"
     create_trackbars(control_window)
 
-    # For image mode we load once and reuse
-    base_frame = None
-    if source == "image":
-        if not filename:
-            raise ValueError("filename is required when source='image'")
-        base_frame = load_image(filename)
+    # Fixed ROI used earlier
+    x1, x2 = 120, 528
+    y1, y2 = 60, 472
 
     while True:
-        # Get frame 
-        if source == "camera":
-            frame = get_frame(source, filename, camera)
-        else:
-            frame = base_frame.copy()
 
-        # Read current trackbar values
-        scale_percent = max(10, cv.getTrackbarPos("scale %", control_window))
-        scale = scale_percent / 100.0
+        frame = get_frame(source, filename, camera) if source == "camera" else base_frame.copy()
+        frame = frame[y1:y2, x1:x2]   # crop ROI
 
-        blur_kernel = cv.getTrackbarPos("blur k", control_window)
-        if blur_kernel < 1:
-            blur_kernel = 1
-        if blur_kernel % 2 == 0:
-            blur_kernel += 1
+        # Read trackbar values
+        scale = max(10, cv.getTrackbarPos("scale %", control_window)) / 100.0
+
+        blur_k = cv.getTrackbarPos("blur k", control_window)
+        blur_k = blur_k if blur_k % 2 == 1 else blur_k + 1
+        blur_k = max(1, blur_k)
 
         thresh_val = cv.getTrackbarPos("thresh", control_window)
         canny_low = cv.getTrackbarPos("canny low", control_window)
@@ -106,83 +90,78 @@ def vision_settings(source: str = "image",
 
         min_area = cv.getTrackbarPos("min area", control_window)
 
-        h_low = cv.getTrackbarPos("H low", control_window)
-        h_high = cv.getTrackbarPos("H high", control_window)
-        s_low = cv.getTrackbarPos("S low", control_window)
-        s_high = cv.getTrackbarPos("S high", control_window)
-        v_low = cv.getTrackbarPos("V low", control_window)
-        v_high = cv.getTrackbarPos("V high", control_window)
-
-        # Sets ROI and scale frame for display & processing
-        x1, x2 = 380, 1478
-        y1, y2 = 143, 872
-        frame = frame[y1:y2, x1:x2]
-
-        h, w = frame.shape[:2]
-        frame_small = cv.resize(frame, (int(w * scale), int(h * scale)))
+        H_low  = cv.getTrackbarPos("H low", control_window)
+        H_high = cv.getTrackbarPos("H high", control_window)
+        S_low  = cv.getTrackbarPos("S low", control_window)
+        S_high = cv.getTrackbarPos("S high", control_window)
+        V_low  = cv.getTrackbarPos("V low", control_window)
+        V_high = cv.getTrackbarPos("V high", control_window)
 
         # HSV mask
-        hsv = cv.cvtColor(frame_small, cv.COLOR_BGR2HSV)
-        lower = np.array([h_low, s_low, v_low], dtype=np.uint8)
-        upper = np.array([h_high, s_high, v_high], dtype=np.uint8)
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        lower = np.array([H_low, S_low, V_low])
+        upper = np.array([H_high, S_high, V_high])
         mask = cv.inRange(hsv, lower, upper)
-        masked = cv.bitwise_and(frame_small, frame_small, mask=mask)
+        masked = cv.bitwise_and(frame, frame, mask=mask)
 
-        # Grayscale + blur
+        # Gray + blur
         gray = cv.cvtColor(masked, cv.COLOR_BGR2GRAY)
-        blur = cv.GaussianBlur(gray, (blur_kernel, blur_kernel), 0)
+        blur = cv.GaussianBlur(gray, (blur_k, blur_k), 0)
 
-        # Threshold + edges 
-        _, thres = cv.threshold(blur, thresh_val, 255, cv.THRESH_BINARY)
-        edge = cv.Canny(blur, canny_low, canny_high)
+        # Threshold + edges
+        _, thres = cv.threshold(blur, thresh_val, 255, cv.THRESH_BINARY_INV)
+        edges = cv.Canny(blur, canny_low, canny_high)
 
-        # Contours with area filter (maybe we change approach)
-        contours, _ = cv.findContours(edge, cv.RETR_LIST,
-                                      cv.CHAIN_APPROX_SIMPLE)
-        big_contours = [c for c in contours if cv.contourArea(c) >= min_area]
+        # Contours
+        cnts, _ = cv.findContours(edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        big_cnts = [c for c in cnts if cv.contourArea(c) >= min_area]
 
-        overlay = frame_small.copy()
-        cv.drawContours(overlay, big_contours, -1, (0, 0, 255), 2)
+        overlay = frame.copy()
+        cv.drawContours(overlay, big_cnts, -1, (0,0,255), 2)
 
-        # Tilføj: center-prikker for hvert contour (baseret på moments)
-        for cnt in big_contours:
-            M = cv.moments(cnt)
-
-            if M["m00"] != 0:     # sikrer at der er areal nok til at beregne center
+        # Draw centers
+        for c in big_cnts:
+            M = cv.moments(c)
+            if M["m00"] != 0:
                 cx = int(M["m10"] / M["m00"])
                 cy = int(M["m01"] / M["m00"])
-
-                # tegn center-prik
-                cv.circle(overlay, (cx, cy), 4, (0, 255, 255), -1)
-
-            else:
-                # Contour har for lille areal eller er en linje → ingen centroid
-                pass
-
-        # Debug print
-        print(f"\rContours: {len(big_contours)} | "
-              f"scale={scale:.2f}, blur={blur_kernel}, "
-              f"thr={thresh_val}, canny=({canny_low},{canny_high}), "
-              f"min_area={min_area}", end="")
+                cv.circle(overlay, (cx,cy), 4, (0,255,255), -1)
 
         # Show windows
-        cv.imshow("Frame", frame_small)
+        cv.imshow("Frame", frame)
         cv.imshow("Mask", mask)
-        cv.imshow("Gray", gray)
         cv.imshow("Thresh", thres)
-        cv.imshow("Edges", edge)
+        cv.imshow("Edges", edges)
         cv.imshow("Overlay", overlay)
 
         key = cv.waitKey(1) & 0xFF
-        if key in (27, ord("q")):
+
+        # SAVE SETTINGS
+        if key == ord('s'):
+            settings = {
+                "H_low": H_low,
+                "H_high": H_high,
+                "S_low": S_low,
+                "S_high": S_high,
+                "V_low": V_low,
+                "V_high": V_high,
+                "blur_k": blur_k,
+                "min_area": min_area,
+                "scale": scale
+            }
+
+            with open(SETTINGS_FILE, "w") as f:
+                json.dump(settings, f, indent=4)
+
+            print("\n[SAVED] calibration_settings.json")
+
+        # EXIT
+        if key in (27, ord('q')):
             break
 
-    print() 
     cv.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    # Start in image mode using your frame
-    vision_settings(source="image", filename="frame_1764083636036.png")
-    # Later you can test camera mode with:
-    # vision_tuner(source="camera")
+    # Edit this to your test image
+    vision_settings(source="image", filename="frame_1764242837455.png")
