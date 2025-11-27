@@ -35,3 +35,15 @@ def edges(img): return cv.Canny(img, 50, 150)
 def get_contours(binary):
     contours, _ = cv.findContours(binary, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     return contours
+
+# Rotation 
+def rotation(img, angle, rotPoint=None):
+    (height,width) = img.shape[:2]
+
+    if rotPoint is None:
+        rotPoint = (width//2,height//2)
+        
+    RotationMatrix = cv.getRotationMatrix2D(rotPoint, angle, 1.0 )
+    dimensions = (width, height)
+    
+    return cv.warpAffine(img, RotationMatrix, dimensions)
