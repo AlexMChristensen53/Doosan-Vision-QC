@@ -164,4 +164,4 @@ def vision_settings(source: str = "image",
 
 if __name__ == "__main__":
     # Edit this to your test image
-    vision_settings(source="image", filename="frame_1764242837455.png")
+    vision_settings(source="image", filename="frame_1764252953417.png")
