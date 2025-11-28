@@ -5,10 +5,17 @@ import numpy as np
 class QCForm:
     """
     QCForm analyserer formen på objekter i et binært mask-billede.
+    Returnerer både OK og NOT OK objekter (store objekter),
+    men ignorerer små konturer (fx skruehuller og støj).
     """
 
     def __init__(self, min_area=1000, min_aspect=2.0, max_aspect=7.0,
-                 min_solidity=0.90, min_extent=0.80):
+                 min_solidity=0.88, min_extent=0.90):
+        """
+        min_area:
+            Minimumsareal for et objekt. Alt under dette ignoreres totalt.
+            (bruges til at fjerne skruehuller og støj)
+        """
         self.min_area = min_area
         self.min_aspect = min_aspect
         self.max_aspect = max_aspect
@@ -16,13 +23,19 @@ class QCForm:
         self.min_extent = min_extent
 
     # ------------------------------------------------------------
-    # Evaluer ALLE objekter
+    # Evaluer ALLE store objekter (små ignoreres)
     # ------------------------------------------------------------
     def evaluate_all(self, mask):
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         results = []
 
         for cnt in contours:
+            area = cv.contourArea(cnt)
+
+            # IGNORÉR ALLE SMÅ KONTURER (skruehuller, støj, knæk)
+            if area < self.min_area:
+                continue
+
             r = self.evaluate_single(cnt)
             results.append(r)
 
@@ -34,8 +47,6 @@ class QCForm:
     def evaluate_single(self, cnt):
 
         area = cv.contourArea(cnt)
-        if area < self.min_area:
-            return {"valid": False, "reason": "Contour too small"}
 
         # bounding rect
         rect = cv.minAreaRect(cnt)
@@ -78,14 +89,15 @@ class QCForm:
             "valid": valid,
             "area": area,
             "center": (cx, cy),
-            "width": w_norm,          # <-- normaliseret
-            "height": h_norm,         # <-- normaliseret
+            "width": w_norm,
+            "height": h_norm,
             "angle": angle,
             "aspect_ratio": aspect_ratio,
             "solidity": solidity,
             "extent": extent,
             "bbox_points": box,
-            "reason": reason
+            "reason": reason,
+            "contour": cnt,
         }
 
     # ------------------------------------------------------------
@@ -95,7 +107,7 @@ class QCForm:
         vis = frame.copy()
 
         for r in results:
-            color = (0, 255, 0) if r["valid"] else (0, 0, 255)
+            color = (0, 255, 0) if r["valid"] else (0, 0, 255)  # grøn = OK, rød = NOT OK
             box = r["bbox_points"]
 
             cv.polylines(vis, [box], True, color, 2)
