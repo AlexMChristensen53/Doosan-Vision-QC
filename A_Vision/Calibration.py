@@ -3,7 +3,7 @@ import cv2 as cv
 from Vision_tools import load_image
 import json
 
-SETTINGS_FILE = "C:/Users/Alexc/OneDrive/Skrivebord/Doosan-Vision-QC/Doosan-Vision-QC/A_Vision/calibration_settings.json"
+SETTINGS_FILE = "C:/Users/Alexc/OneDrive/Skrivebord/Doosan-Vision-QC/Doosan-Vision-QC/C_data/calibration_settings.json"
 
 img = load_image("frame_1764241656914.png")
 hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)

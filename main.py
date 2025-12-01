@@ -32,21 +32,22 @@ blur_k   = cfg["blur_k"]
 H = np.load(H_PATH)["H"]
 
 # ---------------------------------------------
-# ROI used during CALIBRATION (IMPORTANT)
+# ROI USED DURING CALIBRATION
 # ---------------------------------------------
 x1, x2 = 120, 528
 y1, y2 = 60, 472
 
 # ---------------------------------------------
-# CAMERA INIT (do NOT rotate frame anymore)
+# CAMERA INIT
 # ---------------------------------------------
 cam = OakCamera(resolution=(640, 400))
 
-latest_detections = []   # (cx, cy, angle)
-
-# Dimensions for rotation compensation
+# Frame dimensions for rotation compensation
 FRAME_W = 640
 FRAME_H = 400
+
+latest_detections = []   # (cx, cy, angle)
+
 
 # ---------------------------------------------
 # MAIN LOOP
@@ -56,39 +57,71 @@ while True:
     if frame is None:
         continue
 
-    # --- Extract ROI JUST LIKE DURING CALIBRATION ---
     hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-    roi = hsv[y1:y2, x1:x2]
 
-    # Blur + mask
+    # Extract ROI exactly like in calibration
+    roi = hsv[y1:y2, x1:x2]
     roi_blur = cv.GaussianBlur(roi, (blur_k, blur_k), 0)
+
+    # HSV mask
     mask = cv.inRange(roi_blur, lower, upper)
 
+    # -----------------------------------------
+    # ⭐ MORPHOLOGY PIPELINE FOR STABLE CONTOURS
+    # -----------------------------------------
+    kernel = np.ones((5,5), np.uint8)
+
+    # Remove tiny noise
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel, iterations=2)
+
+    # Fill internal gaps
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, iterations=2)
+
+    # Smooth edges
+    mask = cv.GaussianBlur(mask, (5,5), 0)
+
+    # Sharpen shape
+    mask_edges = cv.Canny(mask, 40, 120)
+    mask_edges = cv.dilate(mask_edges, kernel, iterations=1)
+
+    # -----------------------------------------
     # FIND CONTOURS
-    cnts, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    # -----------------------------------------
+    cnts, _ = cv.findContours(mask_edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
     latest_detections = []
 
     # -----------------------------------------
-    # DETECT OBJECTS IN THIS FRAME
+    # DETECT OBJECTS (STABLE VERSION)
     # -----------------------------------------
     for cnt in cnts:
         if cv.contourArea(cnt) < min_area:
             continue
 
-        rot_rect = cv.minAreaRect(cnt)
+        # Smooth contour to remove jitter
+        epsilon = 0.01 * cv.arcLength(cnt, True)
+        cnt_smooth = cv.approxPolyDP(cnt, epsilon, True)
+
+        # force longest side to be height
+        rot_rect = cv.minAreaRect(cnt_smooth)
         (center_local, (w, h), angle) = rot_rect
 
-        # Angle normalization
-        object_angle = angle if w < h else angle + 153
+        if w > h:
+            # swap so h is always the long side
+            w, h = h, w
+            angle = angle + 27  # rotate angle to follow the long side
 
-        # UNROTATED PIXEL COORDINATES INSIDE FULL FRAME
+        # Normalize to 0–180°
+        object_angle = angle % 180
+
+
+        # Convert ROI → global pixel coords
         cx = int(center_local[0]) + x1
         cy = int(center_local[1]) + y1
 
         latest_detections.append((cx, cy, object_angle))
 
-        # ----- VISUALIZE ON FRAME -----
+        # ----- VISUALIZE -----
         cv.circle(frame, (cx, cy), 5, (0,255,0), -1)
 
         box = cv.boxPoints(rot_rect)
@@ -98,28 +131,28 @@ while True:
         cv.drawContours(frame, [box], 0, (0,255,0), 2)
 
     cv.imshow("frame", frame)
+
+    # single waitKey per loop
     key = cv.waitKey(1) & 0xFF
 
     if key == ord('q'):
         break
 
     # -----------------------------------------
-    # SNAPSHOT (PRESS S)
+    # SNAPSHOT (PRESS S): Sort + Print + Overlay
     # -----------------------------------------
     if key == ord('s'):
         print("\n▶ Snapshot: Sorted robot coordinates:\n")
 
-        processed = []  # (dist, X, Y, angle, cx, cy)
+        processed = []  # (distance, X, Y, angle, cx, cy)
 
         for (cx, cy, angle) in latest_detections:
 
-            # ------------------------------------------------
-            # ROTATION COMPENSATION (Instead of rotating image)
-            # ------------------------------------------------
+            # Rotation compensation (instead of rotating image)
             cx_r = FRAME_W - cx
             cy_r = FRAME_H - cy
 
-            # Convert using homography
+            # Pixel → robot using homography
             p = np.array([cx_r, cy_r, 1.0])
             mapped = H @ p
             X = mapped[0] / mapped[2]
@@ -128,10 +161,10 @@ while True:
             dist = np.sqrt(X**2 + Y**2)
             processed.append((dist, X, Y, angle, cx, cy))
 
-        # SORT OBJECTS CLOSEST TO ROBOT ORIGIN
+        # Sort closest to robot origin
         processed.sort(key=lambda x: x[0])
 
-        # PRINT + VISUALIZE
+        # Print & draw labels
         for idx, (_, X, Y, angle, cx, cy) in enumerate(processed):
             print(f"[Obj {idx}] Robot=({X:.2f}, {Y:.2f}), Angle={angle:.2f}°, Pixel=({cx},{cy})")
 
