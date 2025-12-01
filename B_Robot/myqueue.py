@@ -24,3 +24,5 @@ class Queue:    #Her starter jeg med af definere klassen, under er funtioner
 
 myQueue = Queue() #
 
+
+
