@@ -3,6 +3,10 @@ import threading
 import sys
 import time
 import queue
+import os
+
+# Add parent directory to path to import B_Robot
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from B_Robot.send_worker import SendWorker
 
 HOST = "192.168.137.51"  # Server (Doosan Robot) IP
