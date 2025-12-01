@@ -13,7 +13,7 @@ import sys
 ROOT = Path(__file__).resolve().parent
 sys.path.append(str(ROOT))
 
-# Import QC modules
+# QC modules (uændret)
 from qc_preprocess import QCPreprocess
 from qc_form import QCForm
 from qc_size import QCSize
@@ -22,50 +22,39 @@ from qc_special import QCSpecial
 from qc_evaluate import QCEvaluate
 
 # Camera
-from A_Vision.Vision_camera import OakCamera
+from qc_vision_camera import OakCamera
 
 
 # -------------------------------------------
-# Draw overlay (with reason text)
+# Instantiate QC modules (samme settings som i test)
 # -------------------------------------------
-def draw_qc_overlay(frame, form, size, color, special, evaluated):
-    vis = frame.copy()
+qc_form = QCForm(
+    min_area=1500,
+    min_aspect=2.0,
+    max_aspect=7.0,
+    min_solidity=0.88,
+    min_extent=0.90
+)
 
-    for f, s, c, sp, ev in zip(form, size, color, special, evaluated):
+qc_size = QCSize(
+    mm_per_pixel=0.5098,
+    expected_width_mm=100.0,
+    expected_height_mm=25.0,
+    tolerance_width_mm=5.0,
+    tolerance_height_mm=3.0
+)
 
-        overall_ok = ev["overall_ok"]
-        color_box = (0,255,0) if overall_ok else (0,0,255)
+qc_color = QCColor(
+    reference_lab=[107.30, 187.07, 160.88],
+    tolerance_dE=25.0
+)
 
-        box = f["bbox_points"]
-        cx, cy = map(int, f["center"])
+qc_special = QCSpecial(
+    expected_hole_count=2,
+    min_hole_area=50
+)
 
-        cv.polylines(vis, [box], True, color_box, 2)
-        cv.circle(vis, (cx, cy), 5, (0,255,255), -1)
-
-        # Status text
-        status = "OK" if overall_ok else "NOT OK"
-        cv.putText(vis, status, (cx - 40, cy - 20),
-                   cv.FONT_HERSHEY_SIMPLEX, 0.6, color_box, 2)
-
-        # Reason lines
-        y = cy + 10
-        for r in ev["reasons"]:
-            cv.putText(vis, r, (cx - 60, y),
-                       cv.FONT_HERSHEY_SIMPLEX, 0.45, (255,255,255), 1)
-            y += 18
-
-    return vis
-
-
-
-# -------------------------------------------
-# Instantiate QC modules
-# -------------------------------------------
-qc_form    = QCForm()
-qc_size    = QCSize()
-qc_color   = QCColor(reference_lab=[107.30, 187.07, 160.88], tolerance_dE=25)
-qc_special = QCSpecial(min_holes=2, hole_min_area=30)
-qc_eval    = QCEvaluate()
+qc_eval = QCEvaluate()
 
 
 # -------------------------------------------
@@ -83,31 +72,38 @@ while True:
     if frame is None:
         continue
 
-    # 1) PREPROCESS
+    # -----------------------------
+    # 1) PREPROCESS → mask
+    # -----------------------------
     mask, gray, thresh, edges, debug = QCPreprocess(frame)
 
+    # -----------------------------
     # 2) QC MODULES
+    # -----------------------------
     form_results    = qc_form.evaluate_all(mask)
     size_results    = qc_size.evaluate_all(form_results)
     color_results   = qc_color.evaluate_all(frame, form_results)
     special_results = qc_special.evaluate_all(mask, form_results)
 
-    # 3) QC EVALUATE
-    eval_results = qc_eval.evaluate(form_results,
-                                    size_results,
-                                    color_results,
-                                    special_results)
+    # -----------------------------
+    # 3) COMBINE / FINAL QC
+    # -----------------------------
+    final_results = qc_eval.combine(
+        form_results,
+        size_results,
+        color_results,
+        special_results
+    )
 
-    # 4) Draw overlay
-    overlay = draw_qc_overlay(frame,
-                              form_results,
-                              size_results,
-                              color_results,
-                              special_results,
-                              eval_results)
+    # -----------------------------
+    # 4) IDENTISK overlay som test
+    # -----------------------------
+    overlay = qc_eval.draw_overlay(frame, form_results, final_results)
 
-    # 5) Show
-    cv.imshow("QC OVERLAY", overlay)
+    # -----------------------------
+    # 5) VISUALIZE
+    # -----------------------------
+    cv.imshow("QC – LIVE OVERLAY", overlay)
 
     key = cv.waitKey(1) & 0xFF
     if key == ord('q'):
