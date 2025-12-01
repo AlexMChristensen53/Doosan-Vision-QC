@@ -259,7 +259,8 @@ def vision_settings(source: str = "image",
             cv.imwrite(f"{outdir}/edges_{ts}.png", edge)
             cv.imwrite(f"{outdir}/overlay_{ts}.png", overlay)
 
-            print(f"\n[SAVED PNG] → {outdir}/")
+            print(f"\n[SAVED PNG SERIES] → {outdir}/frame_{ts}.png")
+
 
         # EXIT
         if key in (27, ord("q")):
