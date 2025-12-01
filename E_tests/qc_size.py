@@ -12,11 +12,12 @@ class QCSize:
     """
 
     def __init__(self,
-                 mm_per_pixel: float = 0.383,
-                 expected_width_mm: float = 96.7,
-                 expected_height_mm: float = 25.7,
-                 tolerance_width_mm: float = 3.0,
-                 tolerance_height_mm: float = 2.0):
+                 mm_per_pixel: float = 0.5098,
+                 expected_width_mm: float = 100.0,
+                 expected_height_mm: float = 25.0,
+                 tolerance_width_mm: float = 5.0,
+                 tolerance_height_mm: float = 3.0):
+
         """
         Kalibreringsparametre:
 
