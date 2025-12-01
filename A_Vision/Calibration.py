@@ -3,7 +3,7 @@ import cv2 as cv
 from Vision_tools import load_image
 import json
 
-SETTINGS_FILE = "C:/Users/Alexc/OneDrive/Skrivebord/Doosan-Vision-QC/Doosan-Vision-QC/A_Vision/calibration_settings.json"
+SETTINGS_FILE = "C:/Users/Alexc/OneDrive/Skrivebord/Doosan-Vision-QC/Doosan-Vision-QC/C_data/calibration_settings.json"
 
 img = load_image("frame_1764241656914.png")
 hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
@@ -88,11 +88,12 @@ cv.destroyAllWindows()
 # 4. Robot coordinates (20 points, row-major)
 # --------------------------------------
 robot_points = np.array([
-    [0.0,    0.0], [112.5,  0.0], [225.0,  0.0], [337.5,  0.0], [450.0,  0.0],
-    [0.0,  140.0], [112.5,140.0], [225.0,140.0], [337.5,140.0], [450.0,140.0],
-    [0.0,  280.0], [112.5,280.0], [225.0,280.0], [337.5,280.0], [450.0,280.0],
-    [0.0,  420.0], [112.5,420.0], [225.0,420.0], [337.5,420.0], [450.0,420.0]
+    [0.0,    420.0], [112.5, 420.0], [225.0, 420.0], [337.5, 420.0], [450.0, 420.0],
+    [0.0,    280.0], [112.5, 280.0], [225.0, 280.0], [337.5, 280.0], [450.0, 280.0],
+    [0.0,    140.0], [112.5, 140.0], [225.0, 140.0], [337.5, 140.0], [450.0, 140.0],
+    [0.0,      0.0], [112.5,   0.0], [225.0,   0.0], [337.5,   0.0], [450.0,   0.0]
 ], dtype=np.float32)
+
 
 # --------------------------------------
 # 5. Compute Homography

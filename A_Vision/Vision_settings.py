@@ -247,16 +247,12 @@ def vision_settings(source: str = "image",
 
             print("\n[SAVED] calibration_settings.json")
 
-        # SAVE PNGs (P)
+        # PNG SAVE
         if key == ord('p'):
             outdir = os.path.join("C_data", "Sample_images")
             os.makedirs(outdir, exist_ok=True)
             ts = int(time.time())
 
-            # Frame AFTER ROI + SCALE (same size as mask/thresh)
-            cv.imwrite(f"{outdir}/frame_{ts}.png", frame_small)
-
-            # Processing stages
             cv.imwrite(f"{outdir}/mask_{ts}.png", mask)
             cv.imwrite(f"{outdir}/gray_{ts}.png", gray)
             cv.imwrite(f"{outdir}/thresh_{ts}.png", thres)
