@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parents[0]
 sys.path.append(str(PROJECT))
 
-from E_tests.qc_preprocess import QCPreprocess
+from E_tests.JacobV_test.qc_preprocess import QCPreprocess
 
 # Testimage
 TEST_IMAGE = PROJECT / "C_data" / "Sample_images" / "frame_1764333461.png"
