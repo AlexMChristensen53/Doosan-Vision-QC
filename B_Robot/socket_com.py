@@ -1,94 +1,58 @@
+# socket_com.py
 import socket
 import time
 import threading
 
 
 class socketCom:
-    def connected(HOST, PORT, disconnect_event=None):
-        """
-        Opretter og vedligeholder en TCP-forbindelse til en server.
-        Når forbindelsen ryger, forsøger den at genoprette forbindelsen.
-        """
-        if disconnect_event is None:
-            disconnect_event = threading.Event()
+    def __init__(self):
+        self.s: socket.socket | None = None
 
-        s = None
+    def connected(self, HOST, PORT, disconnect_event: threading.Event):
+        """
+        Holder en TCP-forbindelse til robotten kørende.
+        Sender INGEN data – det klarer send_worker.
+        """
         backoff = 1.0
 
-        try:
-            while not disconnect_event.is_set():
+        while not disconnect_event.is_set():
+            s = None
+            try:
+                print(f"[socketCom] Forsøger at connecte til {HOST}:{PORT}...")
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(5.0)
+                s.connect((HOST, PORT))
+                s.settimeout(None)
 
-                # 1) FORSØG AT CONNECTE
+                self.s = s
+                print(f"[socketCom] ✓ Connected til {HOST}:{PORT}")
+
+                # hold forbindelsen åben
                 while not disconnect_event.is_set():
-                    try:
-                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        s.settimeout(5.0)
-                        s.connect((HOST, PORT))
-                        s.settimeout(None)
+                    time.sleep(0.5)
 
-                        print(f"✓ Connected to Doosan server at {HOST}:{PORT}")
-
-                        try:
-                            s.sendall(b"Connected to SUSAN\r\n")
-                        except Exception:
-                            print("Failed to send initial message.")
-                            break
-
-                        time.sleep(0.2)
-                        backoff = 1.0
-                        break
-
-                    except KeyboardInterrupt:
-                        print("\nCancelled by user during connection attempt.")
-                        disconnect_event.set()
-                        return
-
-                    except Exception as e:
-                        print(f"Could not connect to {HOST}:{PORT} ({e}). Retrying in {backoff:.1f}s...")
-                        if s:
-                            try:
-                                s.close()
-                            except Exception:
-                                pass
-
-                        time.sleep(backoff)
-                        backoff = min(backoff * 2, 30.0)
-
-                # 2) PING / KEEP-ALIVE LOOP
-                while not disconnect_event.is_set():
-                    try:
-                        s.sendall(b"PING\r\n")
-                        time.sleep(5.0)  # Adjust keep-alive interval as needed
-                    except Exception:
-                        print("Connection lost. Attempting to reconnect...")
-                        break
-
-                # 3) RYD OP OG RECONNECT
+            except Exception as e:
+                print(f"[socketCom] Forbindelsesfejl: {e}")
+                self.s = None
                 if s:
-                    try:
-                        s.shutdown(socket.SHUT_RDWR)
-                    except Exception:
-                        pass
                     try:
                         s.close()
                     except Exception:
                         pass
 
-                # Hvis disconnect_event ikke er sat, prøv at genoprette forbindelsen
-                if not disconnect_event.is_set():
-                    print("Reconnecting...")
-                    continue
+                if disconnect_event.is_set():
+                    break
 
-                print("Disconnect requested — stopping.")
-                break
+                print(f"[socketCom] Prøver igen om {backoff:.1f} sek...")
+                time.sleep(backoff)
+                backoff = min(backoff * 2, 30.0)
 
-        finally:
-            if s:
-                try:
-                    s.close()
-                except Exception:
-                    pass
+            finally:
+                if s:
+                    try:
+                        s.close()
+                    except Exception:
+                        pass
+                self.s = None
 
-
-if __name__ == "__main__":
-    com = socketCom()
+        print("[socketCom] Disconnect requested – stopper.")
