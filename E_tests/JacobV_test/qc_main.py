@@ -23,6 +23,8 @@ from qc_size import QCSize
 from qc_color import QCColor
 from qc_special import QCSpecial
 from qc_evaluate import QCEvaluate
+from qc_export import QCExport
+
 
 # Pose utilities
 from Angle_utility import pca_angle, draw_orientation
@@ -205,8 +207,8 @@ while True:
             angle_raw = pca_angle(cnt)
 
             # Camera-to-robot angle correction (solve camera tilt)
-            CAMERA_ROTATION_OFFSET = 25    # fine-tune if needed
-            angle_deg = (angle_raw + CAMERA_ROTATION_OFFSET) % 360
+            CAMERA_ROTATION_OFFSET = 151.55    # fine-tune if needed
+            angle_deg = (angle_raw + CAMERA_ROTATION_OFFSET) % 180
 
 
             # Pixel -> robot (NO flipping, homography already correct)
@@ -249,6 +251,8 @@ while True:
     overlay = draw_overall_with_id(frame, form_results, final_results)
     preview5 = cv.resize(overlay, (DISPLAY_W, DISPLAY_H))
     cv.imshow("QC-overlay", preview5)
+    qc_export = QCExport(z_height_mm=55)
+
 
 
     # --------------------------------------------------
@@ -325,6 +329,10 @@ while True:
     elif key == ord('g'):
         print("RAW FRAME SHAPE:", frame.shape)
         print("MASK SHAPE:", mask.shape)
+        
+    elif key == ord('e'):
+        qc_export.payload_to_json(robot_payload)
+
 
 
 
