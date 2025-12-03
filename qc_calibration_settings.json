@@ -1,0 +1,17 @@
+{
+    "H_low": 167,
+    "H_high": 179,
+    "S_low": 170,
+    "S_high": 255,
+    "V_low": 145,
+    "V_high": 220,
+    "blur_k": 5,
+    "min_area": 0,
+    "scale": 1.0,
+    "thresh_mode": 2,
+    "global_thresh": 108,
+    "block_size": 7,
+    "C": 12,
+    "canny_low": 52,
+    "canny_high": 196
+}

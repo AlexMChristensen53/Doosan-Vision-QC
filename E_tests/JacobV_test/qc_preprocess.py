@@ -14,7 +14,7 @@ from pathlib import Path
 # -----------------------------
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parents[0]                     # <-- vigtigt!
-SETTINGS_FILE = PROJECT_ROOT / "calibration_settings.json"
+SETTINGS_FILE = PROJECT_ROOT / "qc_calibration_settings.json"
 
 
 # -----------------------------

@@ -7,7 +7,7 @@ from qc_special import QCSpecial
 # 1. Indlæs maskebillede
 # ---------------------------------------------------------
 # Brug samme maskefil som QC Form og QC Color
-mask = cv.imread("C_data/Sample_images/mask_1764333461.png", cv.IMREAD_GRAYSCALE)
+mask = cv.imread("C_data/Sample_images/mask_1764760632.png", cv.IMREAD_GRAYSCALE)
 
 if mask is None:
     raise FileNotFoundError("Maskebillede ikke fundet. Tjek filstien.")

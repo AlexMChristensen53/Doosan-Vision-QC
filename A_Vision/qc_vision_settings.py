@@ -1,4 +1,3 @@
-from __future__ import annotations
 import cv2 as cv
 import numpy as np
 import json
@@ -15,8 +14,9 @@ except ImportError:
     OAK_AVAILABLE = False
 
 
-SETTINGS_FILE = "calibration_settings_dots.json"
-
+SETTINGS_FILE = "calibration_settings.json"
+DISPLAY_W = 1280
+DISPLAY_H = 720
 
 def nothing(_):
     pass
@@ -24,9 +24,11 @@ def nothing(_):
 
 def create_trackbars(window_name: str) -> None:
 
+
     cv.namedWindow(window_name, cv.WINDOW_NORMAL)
 
     cv.createTrackbar("scale %", window_name, 40, 100, nothing)
+
     cv.createTrackbar("blur k", window_name, 5, 31, nothing)
 
     cv.createTrackbar("global thresh", window_name, 120, 255, nothing)
@@ -111,7 +113,17 @@ def get_frame(source: str, filename: str | None, camera: "OakCamera | None"):
 def vision_settings(source: str = "image",
                     filename: str | None = None) -> None:
 
+
+
+
+
+
+
     camera = OakCamera() if (source == "camera" and OAK_AVAILABLE) else None
+
+
+
+
 
     control_window = "controls"
     create_trackbars(control_window)
@@ -151,6 +163,7 @@ def vision_settings(source: str = "image",
 
         C_val = cv.getTrackbarPos("C", control_window)
 
+
         canny_low = cv.getTrackbarPos("canny low", control_window)
         canny_high = cv.getTrackbarPos("canny high", control_window)
         if canny_high <= canny_low:
@@ -165,10 +178,6 @@ def vision_settings(source: str = "image",
         V_low = cv.getTrackbarPos("V low", control_window)
         V_high = cv.getTrackbarPos("V high", control_window)
 
-        # -----------------------------
-        # ROI
-        # -----------------------------
-       #
 
         h, w = frame.shape[:2]
         frame_small = cv.resize(frame, (int(w * scale), int(h * scale)))
@@ -180,26 +189,55 @@ def vision_settings(source: str = "image",
         mask = cv.inRange(hsv, lower, upper)
         masked = cv.bitwise_and(frame_small, frame_small, mask=mask)
 
-        # --- DOT DETECTION FOR CALIBRATION (MATCHES Calibration.py) ---
-        # Work directly on the HSV mask – no canny, no adaptive thresh.
-        blur_mask = cv.GaussianBlur(mask, (blur_k, blur_k), 0)
 
-        contours, _ = cv.findContours(blur_mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        gray = cv.cvtColor(masked, cv.COLOR_BGR2GRAY)
+        blur = cv.GaussianBlur(gray, (blur_k, blur_k), 0)
+
+        if thresh_mode == 0:
+            _, thres = cv.threshold(blur, global_thresh_val, 255, cv.THRESH_BINARY_INV)
+
+        elif thresh_mode == 1:
+            thres = cv.adaptiveThreshold(
+                blur, 255,
+                cv.ADAPTIVE_THRESH_MEAN_C,
+                cv.THRESH_BINARY_INV,
+                block_size, C_val)
+
+        else:
+            thres = cv.adaptiveThreshold(
+                blur, 255,
+                cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv.THRESH_BINARY_INV,
+                block_size, C_val)
+
+        edge = cv.Canny(blur, canny_low, canny_high)
+
+
+        contours, _ = cv.findContours(edge, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
         big_contours = [c for c in contours if cv.contourArea(c) >= min_area]
 
 
+
+
+
+
         overlay = frame_small.copy()
+        preview_overlay = cv.resize(overlay, (DISPLAY_W,DISPLAY_H))
+        preview_mask = cv.resize(mask, (DISPLAY_W,DISPLAY_H))
+        preview_gray = cv.resize(gray, (DISPLAY_W,DISPLAY_H))
+        preview_thres = cv.resize(thres, (DISPLAY_W,DISPLAY_H))
+        preview_edge= cv.resize(edge, (DISPLAY_W,DISPLAY_H))
         cv.drawContours(overlay, big_contours, -1, (0, 0, 255), 2)
 
         print(f"\rContours: {len(big_contours)}", end="")
 
         # SHOW
         cv.imshow("Frame", frame_small)
-        cv.imshow("Mask", mask)
-        #cv.imshow("Gray", gray)
-        #cv.imshow("Thresh", thres)
-        #cv.imshow("Edges", edge)
-        cv.imshow("Overlay", overlay)
+        cv.imshow("Mask", preview_mask)
+        cv.imshow("Gray", preview_gray)
+        cv.imshow("Thresh", preview_thres)
+        cv.imshow("Edges", preview_edge)
+        cv.imshow("Overlay", preview_overlay)
 
         key = cv.waitKey(1) & 0xFF
 
@@ -209,6 +247,8 @@ def vision_settings(source: str = "image",
                 "H_low": H_low, "H_high": H_high,
                 "S_low": S_low, "S_high": S_high,
                 "V_low": V_low, "V_high": V_high,
+
+
 
                 "blur_k": blur_k,
                 "min_area": min_area,
@@ -228,16 +268,20 @@ def vision_settings(source: str = "image",
 
             print("\n[SAVED] calibration_settings.json")
 
-        # PNG SAVE
+        # SAVE PNGs (P)
         if key == ord('p'):
             outdir = os.path.join("C_data", "Sample_images")
             os.makedirs(outdir, exist_ok=True)
             ts = int(time.time())
 
+            # Frame AFTER ROI + SCALE (same size as mask/thresh)
+            cv.imwrite(f"{outdir}/frame_{ts}.png", frame_small)
+
+            # Processing stages
             cv.imwrite(f"{outdir}/mask_{ts}.png", mask)
-            #cv.imwrite(f"{outdir}/gray_{ts}.png", gray)
-            #cv.imwrite(f"{outdir}/thresh_{ts}.png", thres)
-            #cv.imwrite(f"{outdir}/edges_{ts}.png", edge)
+            cv.imwrite(f"{outdir}/gray_{ts}.png", gray)
+            cv.imwrite(f"{outdir}/thresh_{ts}.png", thres)
+            cv.imwrite(f"{outdir}/edges_{ts}.png", edge)
             cv.imwrite(f"{outdir}/overlay_{ts}.png", overlay)
 
             print(f"\n[SAVED PNG SERIES] → {outdir}/frame_{ts}.png")
