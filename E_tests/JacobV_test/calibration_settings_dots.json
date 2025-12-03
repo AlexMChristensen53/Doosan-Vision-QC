@@ -1,0 +1,10 @@
+{
+    "H_low": 44,
+    "H_high": 94,
+    "S_low": 62,
+    "S_high": 255,
+    "V_low": 0,
+    "V_high": 255,
+    "blur_k": 1,
+    "min_area": 10
+}

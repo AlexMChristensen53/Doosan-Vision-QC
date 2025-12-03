@@ -31,7 +31,11 @@ class OakCamera:
         frame = self.q_video.tryGet()
         if frame is None:
             return None
-        return frame.getCvFrame()
+        frame = frame.getCvFrame()
+        # Apply the same 180° rotation that you used during calibration
+        frame = cv.rotate(frame, cv.ROTATE_180)
+        return frame
+
 
 
 if __name__ == "__main__":

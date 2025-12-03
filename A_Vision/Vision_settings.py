@@ -15,7 +15,7 @@ except ImportError:
     OAK_AVAILABLE = False
 
 
-SETTINGS_FILE = "calibration_settings.json"
+SETTINGS_FILE = "calibration_settings_dots.json"
 
 
 def nothing(_):
@@ -168,9 +168,7 @@ def vision_settings(source: str = "image",
         # -----------------------------
         # ROI
         # -----------------------------
-        x1, x2 = 380, 1478
-        y1, y2 = 143, 872
-        frame = frame[y1:y2, x1:x2]
+       #
 
         h, w = frame.shape[:2]
         frame_small = cv.resize(frame, (int(w * scale), int(h * scale)))
@@ -182,30 +180,13 @@ def vision_settings(source: str = "image",
         mask = cv.inRange(hsv, lower, upper)
         masked = cv.bitwise_and(frame_small, frame_small, mask=mask)
 
-        gray = cv.cvtColor(masked, cv.COLOR_BGR2GRAY)
-        blur = cv.GaussianBlur(gray, (blur_k, blur_k), 0)
+        # --- DOT DETECTION FOR CALIBRATION (MATCHES Calibration.py) ---
+        # Work directly on the HSV mask – no canny, no adaptive thresh.
+        blur_mask = cv.GaussianBlur(mask, (blur_k, blur_k), 0)
 
-        if thresh_mode == 0:
-            _, thres = cv.threshold(blur, global_thresh_val, 255, cv.THRESH_BINARY_INV)
-
-        elif thresh_mode == 1:
-            thres = cv.adaptiveThreshold(
-                blur, 255,
-                cv.ADAPTIVE_THRESH_MEAN_C,
-                cv.THRESH_BINARY_INV,
-                block_size, C_val)
-
-        else:
-            thres = cv.adaptiveThreshold(
-                blur, 255,
-                cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv.THRESH_BINARY_INV,
-                block_size, C_val)
-
-        edge = cv.Canny(blur, canny_low, canny_high)
-
-        contours, _ = cv.findContours(edge, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv.findContours(blur_mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         big_contours = [c for c in contours if cv.contourArea(c) >= min_area]
+
 
         overlay = frame_small.copy()
         cv.drawContours(overlay, big_contours, -1, (0, 0, 255), 2)
@@ -215,9 +196,9 @@ def vision_settings(source: str = "image",
         # SHOW
         cv.imshow("Frame", frame_small)
         cv.imshow("Mask", mask)
-        cv.imshow("Gray", gray)
-        cv.imshow("Thresh", thres)
-        cv.imshow("Edges", edge)
+        #cv.imshow("Gray", gray)
+        #cv.imshow("Thresh", thres)
+        #cv.imshow("Edges", edge)
         cv.imshow("Overlay", overlay)
 
         key = cv.waitKey(1) & 0xFF
@@ -270,4 +251,4 @@ def vision_settings(source: str = "image",
 
 
 if __name__ == "__main__":
-    vision_settings(source="image", filename="frame_1764083636036.png")
+    vision_settings(source="image", filename="frame_1764685940878.png")

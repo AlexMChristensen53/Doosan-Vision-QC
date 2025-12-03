@@ -1,7 +1,7 @@
 import depthai as dai
 import cv2 as cv
 import numpy as np
-from A_Vision.Vision_tools import rotation
+from Vision_tools import rotation
 from pathlib import Path
 import time
 
@@ -35,7 +35,7 @@ class OakCamera:
 
 
 if __name__ == "__main__":
-    cam = OakCamera((640, 400))
+    cam = OakCamera((1920, 1080))
 
     while True:
         frame = cam.get_frame()

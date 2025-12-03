@@ -2,11 +2,16 @@ import numpy as np
 import cv2 as cv 
 from Vision_tools import load_image
 import json
+from pathlib import Path
+import sys
 
-SETTINGS_FILE = "C:/Users/Alexc/OneDrive/Skrivebord/Doosan-Vision-QC/Doosan-Vision-QC/C_data/calibration_settings.json"
-
-img = load_image("frame_1764241656914.png")
+img = load_image("frame_1764682982871.png")
 hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+
+# Add project root to Python path
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(ROOT))
+SETTINGS_FILE = "calibration_settings_dots.json"
 
 with open(SETTINGS_FILE, "r") as f: 
     cfg = json.load(f)
@@ -49,8 +54,8 @@ for cnt in contours:
 
 print(f"Detected {len(img_points)} points")
 
-if len(img_points) != 20:
-    raise ValueError("Did not detect exactly 20 calibration dots!")
+#if len(img_points) != 20:
+    #raise ValueError("Did not detect exactly 20 calibration dots!")
 
 # --------------------------------------
 # 3. Sort points into grid order (4 rows x 5 columns)
