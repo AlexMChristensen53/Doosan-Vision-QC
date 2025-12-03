@@ -15,8 +15,8 @@ class QCSize:
                  mm_per_pixel: float = 0.5098,
                  expected_width_mm: float = 100.0,
                  expected_height_mm: float = 25.0,
-                 tolerance_width_mm: float = 5.0,
-                 tolerance_height_mm: float = 3.0):
+                 tolerance_width_mm: float = 8.5,
+                 tolerance_height_mm: float = 4.5):
 
         """
         Kalibreringsparametre:

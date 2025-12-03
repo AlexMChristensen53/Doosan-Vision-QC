@@ -9,13 +9,13 @@ import sys
 
 # Ensure project root is on PATH
 ROOT = Path(__file__).resolve().parent
-PROJECT = ROOT.parents[0]
+PROJECT = ROOT.parents[1]
 sys.path.append(str(PROJECT))
 
-from E_tests.JacobV_test.qc_preprocess import QCPreprocess
+from qc_preprocess import QCPreprocess
 
 # Testimage
-TEST_IMAGE = PROJECT / "C_data" / "Sample_images" / "frame_1764333461.png"
+TEST_IMAGE = PROJECT / "C_data" / "Sample_images" / "frame_actual.png"
 
 print("[INFO] Loading test image:")
 print(TEST_IMAGE)
