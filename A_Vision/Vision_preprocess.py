@@ -5,15 +5,14 @@ from Vision_tools import (
 )
 
 
-#from Oak_camera import OakCamera
-#oak = OakCamera()
+from A_Vision.Vision_camera import OakCamera
+oak = OakCamera()
 
 def get_frame(source="image", filename=None):
     if source == "image":
         return load_image(filename)
     elif source == "camera":
-        # return oak.get_frame()
-        raise NotImplementedError("Camera mode not yet implemented")
+        return oak.get_frame()
     else:
         raise ValueError("Invalid source")
 
