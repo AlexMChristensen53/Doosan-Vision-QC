@@ -1,62 +1,88 @@
+# ======================================================
+# qc_vision_camera.py — FIXED OAK CAMERA CLASS
+# Proper device lifecycle, safe initialization, no lockups
+# ======================================================
+
 import depthai as dai
 import cv2 as cv
-import numpy as np
-from qc_vision_tools import rotation
 from pathlib import Path
 import time
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parents[0]
-PICTURE_FOLDER = PROJECT_ROOT / "C_data" / "Sample_images"
 
 class OakCamera:
     def __init__(self, resolution=(1080, 1080)):
         self.resolution = resolution
+
+        self.pipeline = None
+        self.device = None
+        self.q_video = None
+        self.initialized = False
+
+    # --------------------------------------------------
+    # Build DepthAI Pipeline
+    # --------------------------------------------------
+    def build_pipeline(self):
+        print("[OAK] Building pipeline...")
         self.pipeline = dai.Pipeline()
 
         cam = self.pipeline.createColorCamera()
-        xout = self.pipeline.createXLinkOut()
-        xout.setStreamName("video")
-
-        cam.setPreviewSize(*resolution)
+        cam.setPreviewSize(*self.resolution)
         cam.setInterleaved(False)
         cam.setColorOrder(dai.ColorCameraProperties.ColorOrder.BGR)
+
+        xout = self.pipeline.createXLinkOut()
+        xout.setStreamName("video")
         cam.preview.link(xout.input)
 
-        print("[OAK] Starting camera...")
-        self.device = dai.Device(self.pipeline)
-        self.q_video = self.device.getOutputQueue("video", maxSize=1, blocking=False)
+    # --------------------------------------------------
+    # Start OAK device + queues
+    # --------------------------------------------------
+    def start(self):
+        if self.initialized:
+            print("[OAK] Already initialized.")
+            return True
 
+        if self.pipeline is None:
+            self.build_pipeline()
+
+        print("[OAK] Starting device...")
+
+        try:
+            self.device = dai.Device(self.pipeline)
+            self.q_video = self.device.getOutputQueue(
+                "video", maxSize=1, blocking=False
+            )
+            self.initialized = True
+            print("[OAK] Camera READY.")
+            return True
+
+        except Exception as e:
+            print("[OAK ERROR] Device init failed:", e)
+            self.initialized = False
+            return False
+
+    # --------------------------------------------------
+    # Stop the device (only on program exit)
+    # --------------------------------------------------
+    def stop(self):
+        if self.device is not None:
+            print("[OAK] Closing device...")
+            del self.device
+        self.initialized = False
+
+    # --------------------------------------------------
+    # Get frame with safe handling
+    # --------------------------------------------------
     def get_frame(self):
-        frame = self.q_video.tryGet()
-        if frame is None:
+        if not self.initialized:
             return None
-        frame = frame.getCvFrame()
-        # Apply the same 180° rotation that you used during calibration
+
+        msg = self.q_video.tryGet()
+        if msg is None:
+            return None
+
+        frame = msg.getCvFrame()
+
+        # Single 180° rotate (no double-rotation)
         frame = cv.rotate(frame, cv.ROTATE_180)
         return frame
-
-
-
-if __name__ == "__main__":
-    cam = OakCamera((640, 400))
-
-    while True:
-        frame = cam.get_frame()
-        if frame is None:
-            continue
-
-        frame = rotation(frame, 180)
-        cv.imshow("OAK-D Live", frame)
-
-        key = cv.waitKey(1) & 0xFF
-
-        if key == ord('s'):
-            filename = PICTURE_FOLDER / f"frame_{int(time.time()*1000)}.png"
-            cv.imwrite(str(filename), frame)
-            print("Saved:", filename)
-
-        elif key == ord('q'):
-            break
-
-    cv.destroyAllWindows()

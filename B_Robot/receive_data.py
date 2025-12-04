@@ -32,23 +32,32 @@ class Data:
 
                 print(f"[Data] Robot: {repr(text)}")
 
-                up = text.upper()
-                if "DONE" in up or "IDLE" in up:
-                    # Robotten siger: jeg er færdig med en kommando
-                    if batch_active.is_set():
-                        if cmd_queue.empty():
-                            # Ingen flere kommandoer → batch færdig
-                            print("[Data] Batch færdig → batch_active.clear(), robot_ready.clear()")
-                            batch_active.clear()
-                            robot_ready.clear()
-                        else:
-                            # Der er flere kommandoer i køen → kør næste
-                            print("[Data] DONE/IDLE → robot_ready.set() (næste kommando)")
-                            robot_ready.set()
-                    else:
-                        # batch er ikke aktiv, men vi får DONE/IDLE → bare markér robotten som klar
-                        robot_ready.set()
+                msg = text.upper()
 
+                # --- FIX: React ONLY to DONE ---
+                if "DONE" in msg:
+
+                    # If no batch is active, ignore stray DONE messages
+                    if not batch_active.is_set():
+                        continue
+
+                    # More commands waiting → next command
+                    if not cmd_queue.empty():
+                        print("[Data] DONE → robot_ready.set() (next command)")
+                        robot_ready.set()
+                        continue
+
+                    # Queue empty → batch finished
+                    print("[Data] Batch færdig → batch_active.clear(), robot_ready.clear()")
+                    batch_active.clear()
+                    robot_ready.clear()
+                    continue
+
+                # Ignore IDLE (robot is just reporting general state)
+                if "IDLE" in msg:
+                    continue
+
+                    
         except Exception as e:
             print(f"[Data] stoppet: {e}")
             disconnect_event.set()
