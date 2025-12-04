@@ -18,7 +18,8 @@ class QCSpecial:
 
     def __init__(self,
                  expected_hole_count=2,
-                 min_hole_area=50):
+                 min_hole_area=50,
+                 max_hole_area=150):
         """
         expected_hole_count:
             Hvor mange huller et OK objekt skal have.
@@ -28,6 +29,7 @@ class QCSpecial:
         """
         self.expected_hole_count = expected_hole_count
         self.min_hole_area = min_hole_area
+        self.max_hole_area = max_hole_area
 
     # ------------------------------------------------------------
     # Evaluér alle objekter (loop over QCForm resultater)
@@ -75,7 +77,7 @@ class QCSpecial:
                     if parent != -1:  # intern kontur
                         area = cv.contourArea(cnt)
 
-                        if area >= self.min_hole_area:
+                        if self.min_hole_area <= area <= self.max_hole_area:
                             hole_areas.append(area)
                             hole_count += 1
 

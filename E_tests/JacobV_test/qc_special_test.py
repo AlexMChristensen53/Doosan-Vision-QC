@@ -38,7 +38,8 @@ print()
 # ---------------------------------------------------------
 qc_special = QCSpecial(
     expected_hole_count=2,
-    min_hole_area=50
+    min_hole_area=50,
+    max_hole_area=150
 )
 
 special_results = qc_special.evaluate_all(mask, form_results)
