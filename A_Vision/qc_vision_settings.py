@@ -194,20 +194,20 @@ def vision_settings(source: str = "image",
         blur = cv.GaussianBlur(gray, (blur_k, blur_k), 0)
 
         if thresh_mode == 0:
-            _, thres = cv.threshold(blur, global_thresh_val, 255, cv.THRESH_BINARY_INV)
+            _, thres = cv.threshold(blur, global_thresh_val, 255, cv.THRESH_BINARY)
 
         elif thresh_mode == 1:
             thres = cv.adaptiveThreshold(
                 blur, 255,
                 cv.ADAPTIVE_THRESH_MEAN_C,
-                cv.THRESH_BINARY_INV,
+                cv.THRESH_BINARY,
                 block_size, C_val)
 
         else:
             thres = cv.adaptiveThreshold(
                 blur, 255,
                 cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv.THRESH_BINARY_INV,
+                cv.THRESH_BINARY,
                 block_size, C_val)
 
         edge = cv.Canny(blur, canny_low, canny_high)

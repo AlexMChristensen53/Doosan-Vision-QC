@@ -3,7 +3,7 @@ import cv2 as cv
 import numpy as np
 from qc_form import QCForm
 
-mask = cv.imread("C_data/Sample_images/mask_1764760632.png", cv.IMREAD_GRAYSCALE)
+mask = cv.imread("C_data/Sample_images/mask_1764853751.png", cv.IMREAD_GRAYSCALE)
 
 qc = QCForm(min_area=1500)
 results = qc.evaluate_all(mask)

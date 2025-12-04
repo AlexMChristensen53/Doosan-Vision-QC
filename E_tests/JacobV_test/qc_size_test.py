@@ -4,7 +4,7 @@ from qc_form import QCForm
 from qc_size import QCSize
 
 # 1. Indlæs masken
-mask = cv.imread("C_data/Sample_images/mask_1764760632.png", cv.IMREAD_GRAYSCALE)
+mask = cv.imread("C_data/Sample_images/mask_1764853751.png", cv.IMREAD_GRAYSCALE)
 
 # 2. QC FORM
 qc_form = QCForm(
