@@ -10,13 +10,13 @@ from qc_evaluate import QCEvaluate
 # ---------------------------------------------------------
 # 1. Indlæs billeder
 # ---------------------------------------------------------
-frame = cv.imread("C_data/Sample_images/frame_1764333461.png")
-mask  = cv.imread("C_data/Sample_images/mask_1764333461.png", cv.IMREAD_GRAYSCALE)
+frame = cv.imread("C_data/Sample_images/frame_actual.png")
+mask  = cv.imread("C_data/Sample_images/mask_1764853751.png", cv.IMREAD_GRAYSCALE)
 
 if frame is None:
-    raise FileNotFoundError("Kunne ikke indlæse frame_1764333461.png")
+    raise FileNotFoundError("Kunne ikke indlæse frame_actual.png")
 if mask is None:
-    raise FileNotFoundError("Kunne ikke indlæse mask_1764333461.png")
+    raise FileNotFoundError("Kunne ikke indlæse mask_1764853751.png")
 
 # ---------------------------------------------------------
 # 2. QC FORM

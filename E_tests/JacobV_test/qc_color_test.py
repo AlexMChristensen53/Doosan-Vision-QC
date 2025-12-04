@@ -9,7 +9,7 @@ from qc_color import QCColor
 # 1. Indlæs inputbilleder
 # ---------------------------------------------------------
 frame = cv.imread("C_data/Sample_images/frame_actual.png")
-mask = cv.imread("C_data/Sample_images/mask_1764760632.png", cv.IMREAD_GRAYSCALE)
+mask = cv.imread("C_data/Sample_images/mask_1764853751.png", cv.IMREAD_GRAYSCALE)
 
 # ---------------------------------------------------------
 # 2. QC FORM
