@@ -9,15 +9,17 @@ from socket_com import socketCom
 from send_worker import SendWorker
 from receive_data import Data
 
-HOST = "192.168.137.51"
+HOST = "169.254.1.51"
 PORT = 20002
 
 # filen fra vision-kameraet (som du allerede havde)
-VISION_JSON_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "..",
-    "C_data",
-    "robot_commands.json"
+VISION_JSON_PATH = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "C_data",
+        "robot_commands.json"
+    )
 )
 
 
@@ -104,6 +106,18 @@ def main():
     last_processed_mtime = None   # sidste mtime vi HAR kørt
     pending_mtime = None          # mtime som venter på at nuværende batch bliver færdig
 
+    # ------------------------------------------
+    #  BASELINE JSON – så robotten ikke kører ved startup
+    # ------------------------------------------
+    def load_json_safe(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return None
+
+    last_json_content = load_json_safe(VISION_JSON_PATH)
+
     try:
         while not disconnect_event.is_set():
             # tjek om filen findes / har ændret sig
@@ -112,10 +126,18 @@ def main():
             except FileNotFoundError:
                 mtime = None
 
-            # der er en ny ændring i JSON-filen
             if mtime is not None and mtime != last_processed_mtime:
+                current_json = load_json_safe(VISION_JSON_PATH)
+
+                # Hvis JSON ikke er ændret -> gør ingenting
+                if current_json == last_json_content:
+                    last_processed_mtime = mtime
+                    # (ingen batch)
+                    time.sleep(0.1)
+                    continue
+
+                # Ellers -> JSON ER ændret for real
                 if not batch_active.is_set():
-                    # vi er idle → vi kan starte en ny batch med det samme
                     print(f"[MAIN] Ændring registreret i JSON (mtime={mtime}) → loader og starter batch")
                     try:
                         count = load_vision_commands(cmd_queue)
@@ -123,34 +145,15 @@ def main():
                             batch_active.set()
                             robot_ready.set()
                             last_processed_mtime = mtime
+                            last_json_content = current_json   # ← OPDATER BASELINE
                         else:
                             print("[MAIN] JSON indeholdt ingen kommandoer – ingen batch startet.")
                             last_processed_mtime = mtime
                     except Exception as e:
                         print(f"[MAIN] Fejl ved læsning af JSON: {e}")
-                else:
-                    # der kører allerede en batch → vi venter med at køre denne ændring
-                    print("[MAIN] JSON ændret mens batch kører – gemmer til næste batch.")
-                    pending_mtime = mtime
 
-            # hvis vi IKKE er midt i en batch, men vi har en pending ændring
-            if (not batch_active.is_set()
-                    and pending_mtime is not None
-                    and pending_mtime != last_processed_mtime):
-                print("[MAIN] Batch afsluttet – starter ny batch fra seneste JSON.")
-                try:
-                    count = load_vision_commands(cmd_queue)
-                    if count > 0:
-                        batch_active.set()
-                        robot_ready.set()
-                        last_processed_mtime = pending_mtime
-                    else:
-                        print("[MAIN] JSON indeholdt ingen kommandoer – ingen batch startet.")
-                        last_processed_mtime = pending_mtime
-                except Exception as e:
-                    print(f"[MAIN] Fejl ved læsning af JSON (pending): {e}")
-                finally:
-                    pending_mtime = None
+                    finally:
+                        pending_mtime = None
 
             time.sleep(0.1)  # undgå at spinne CPU'en
 

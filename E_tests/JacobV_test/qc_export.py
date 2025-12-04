@@ -9,8 +9,10 @@ class QCExport:
         """
         self.z_height = z_height_mm
 
-        # ROOT = folder where Doosan-Vision-QC is located
-        self.ROOT = Path(__file__).resolve().parents[1]
+        # ROOT = project root (Doosan-Vision-QC folder)
+        self.ROOT = Path(__file__).resolve().parents[2]
+
+        # C_data ALWAYS exists in project root
         self.CDATA = self.ROOT / "C_data"
 
     def payload_to_json(self, robot_payload, filename="robot_commands.json"):
@@ -34,7 +36,7 @@ class QCExport:
 
         data = {"objects": commands}
 
-        # Save inside C_data
+        # Save inside project-level C_data
         out_path = self.CDATA / filename
 
         with open(out_path, "w") as f:
