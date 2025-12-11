@@ -1,8 +1,39 @@
-# qc_export.py
+"""
+qc_export.py
+Håndterer genereringen af JSON-filen som Doosan-robotten læser.
+Filen indeholder en liste af kommando-strenge der sendes til robotten,
+typisk i formatet:
+
+"add movel X Y Z Angle OK/NOK"
+
+Dette modul har ansvaret for:
+- Konvertering af QC-resultater til robotkommandoer
+- Skrive en fuld JSON-struktur til disk
+- Håndtere fast Z-højde (pick height)
+"""
 import json
 from pathlib import Path
 
 class QCExport:
+    """
+    Klasse der genererer robot-kommando JSON-filen.
+
+    Parametre:
+        z_height_mm (float): Fast Z-værdi som robotten skal bruge ved pick.
+
+    Metoder:
+        - payload_to_json(payload): skriver listen af kommandoer til disk.
+
+    Anvendelse:
+        payload forventes at være en liste med dicts:
+            {
+                "id": int,
+                "ok": bool,
+                "x_mm": float,
+                "y_mm": float,
+                "angle_deg": float
+            }
+    """
     def __init__(self, z_height_mm=55):
         """
         Export QC results to JSON robot command format.
@@ -17,11 +48,25 @@ class QCExport:
 
     def payload_to_json(self, robot_payload, filename="robot_commands.json"):
         """
-        Convert QC robot payload to JSON command file.
+    Konverterer en liste af QC-payloads til robot-kommandoer
+    og gemmer dem i 'C_data/robot_commands.json'.
 
-        Format:
-            "add movel X Y Z ANGLE OK/NOK"
-        """
+    Parametre:
+        payload (list[dict]): Liste af objekter med robotposition, vinkel
+                              og OK/NOK vurdering.
+
+    Returnerer:
+        None - skriver JSON til filsystemet.
+
+    JSON-format:
+        {
+            "objects": [
+                "add movel X Y Z Angle OK",
+                "add movel X Y Z Angle NOK",
+                ...
+            ]
+        }
+    """
 
         commands = []
 

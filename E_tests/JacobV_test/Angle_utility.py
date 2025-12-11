@@ -7,9 +7,6 @@ from typing import Tuple
 def normalize_angle(angle: float) -> float:
     """
     Normaliserer en vinkel til [0, 180) grader.
-
-    Vi arbejder kun med linjens retning (ikke pilens retning),
-    så +v og -v repræsenterer samme akse → 0–180° er nok.
     """
     return float(angle % 180.0)
 
@@ -37,8 +34,6 @@ def pca_angle(contour: np.ndarray) -> float:
         pts = contour
 
     pts = pts.astype(np.float32)
-
-    # Brug OpenCV PCA (hurtig og nem)
     mean, eigenvectors = cv.PCACompute(pts, mean=None)
     # Første egenvektor svarer til største egenværdi (længste retning)
     vx, vy = eigenvectors[0]

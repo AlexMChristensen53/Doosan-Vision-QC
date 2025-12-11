@@ -1,3 +1,14 @@
+"""
+qc_vision_tools.py
+Indeholder generelle hjælpefunktioner anvendt under vision-debugging.
+
+Kun få funktioner bruges i det endelige QC-system, primært:
+- load_image(): loader billeder til debug eller testscenarier
+- rotation(): roterer et billede omkring et centrum
+
+Resten af funktionerne er generelle debug-værktøjer.
+"""
+
 from pathlib import Path
 import cv2 as cv
 import numpy as np
@@ -8,6 +19,18 @@ IMAGE_DIR = PROJECT_ROOT / "C_data" / "Sample_images"
 
 # Loads capture or stored frame
 def load_image(filename):
+    """
+    Loader et billede fra projektets standard-billedmappe.
+    
+    Parametre:
+        filename (str): Filnavn (fx "sample_01.png")
+
+    Returnerer:
+        ndarray: Billedet i BGR-format.
+
+    Kaster:
+        AssertionError hvis billedet ikke kan indlæses.
+    """
     path = IMAGE_DIR / filename
     img = cv.imread(str(path))
     if img is None:
@@ -38,6 +61,18 @@ def get_contours(binary):
 
 # Rotation 
 def rotation(img, angle, rotPoint=None):
+    """
+    Roterer et billede med en given vinkel, brugt ved
+    debug og for at kompensere for kameraorientering.
+
+    Parametre:
+        img (ndarray): Inputbillede.
+        angle (float): Rotationsvinkel i grader.
+        rotPoint (tuple | None): Rotationscenter. Hvis None bruges billedets midte.
+
+    Returnerer:
+        ndarray: Det roterede billede.
+    """
     (height,width) = img.shape[:2]
 
     if rotPoint is None:
