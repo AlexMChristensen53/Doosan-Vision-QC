@@ -131,6 +131,6 @@ class OakCamera:
 
         frame = msg.getCvFrame()
 
-        # Single 180° rotate (no double-rotation)
+        # 180° rotate
         frame = cv.rotate(frame, cv.ROTATE_180)
         return frame

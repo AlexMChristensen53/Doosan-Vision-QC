@@ -34,9 +34,6 @@ class HomographyMapper:
     Metoder:
         - pixel_to_robot(x, y): konverterer pixelposition til mm-position
         - from_file(): indlæser 'calibration_h.npz' og returnerer instans
-
-    Bemærkning:
-        Homografi-matricen antager en kendt og fast kameramontering.
     """
     H: np.ndarray
 
@@ -107,9 +104,6 @@ class HomographyMapper:
 
     Returnerer:
         tuple(float, float): (Xr, Yr) - robotkoordinater i mm.
-
-    Bemærkning:
-        Output korrigeres med homogen division (normering af tredje koordinat).
     """
         pt = np.array([x, y, 1.0], dtype=float)
         dst = self.H @ pt

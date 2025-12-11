@@ -1,7 +1,5 @@
 # =======================================================
-# qc_preprocess.py (FINAL PRODUCTION VERSION)
-# RAW frame → mask + intermediate images
-# Matches Vision_settings pipeline — but WITHOUT crop/scale.
+# qc_preprocess.py
 # =======================================================
 
 import cv2 as cv
