@@ -1,9 +1,18 @@
-# ======================================================
-# qc_main.py — FINAL VERSION (OPTION A + CAMERA OPTION B)
-# Robot listener runs only during QC
-# Camera initializes inside QC but stays alive across cycles
-# QC help menu, debug keys, clean shutdown
-# ======================================================
+"""
+qc_main.py
+Hovedstyringsmodul for Vision QC-systemet.
+
+Dette modul håndterer:
+- Start og stop af OAK-D kameraet
+- Start og nedlukning af robotlytter-processen
+- Hovedmenuen og QC-loop'et
+- Keybindings til debug af QC-resultater
+- Rendering af overlay-vinduer til form/size/color/special
+
+Modulet fungerer som 'entry point' til hele QC-systemet og binder alle
+delmoduler sammen (QCForm, QCSize, QCColor, QCSpecial, QCEvaluate,
+HomographyMapper og OakCamera).
+"""
 
 import cv2 as cv
 import numpy as np
@@ -68,6 +77,13 @@ qc_export = QCExport(z_height_mm=55)
 # ROBOT LISTENER
 # ======================================================
 def start_robot_listener():
+    """
+    Starter robotlytter-processen som et separat subprocess, der overvåger
+    'robot_commands.json' og kommunikerer kommandoer til Doosan-robotten.
+
+    Returnerer:
+        subprocess.Popen objekt, eller None hvis robotfilen ikke findes.
+    """
     robot_script = ROOT.parents[1] / "B_Robot" / "main_robot.py"
 
     if not robot_script.exists():
@@ -166,6 +182,17 @@ DISPLAY_H = 400
 # HELP MENU
 # ======================================================
 def print_qc_help():
+    """
+    Udskriver alle tilgængelige debug- og styringstaster, som kan bruges
+    inde i QC-loopet. Dette inkluderer:
+    - u/i/o/p : debug af form/size/color/special
+    - r       : print robot payload
+    - s       : print pose-resultater
+    - g       : print frame shapes
+    - e       : eksportér JSON
+    - m       : tilbage til main menu
+    - q       : afslut program
+    """
     print("\n========== QC COMMANDS ==========")
     print("u → Debug FORM")
     print("i → Debug SIZE")
@@ -185,6 +212,22 @@ def print_qc_help():
 # QC LOOP
 # ======================================================
 def run_qc_loop():
+    """
+    Starter hele QC-loopet, som kører så længe brugeren ikke trykker 'm' eller 'q'.
+
+    Funktionens ansvar:
+    - Initialisere kameraet, hvis det ikke allerede kører
+    - Starte robot-lytter processen (subprocess)
+    - Læse frames fra OAK-kameraet
+    - Køre preprocess og alle QC-moduler (form, size, color, special)
+    - Beregne pose (center + vinkel) og robotpositioner via homografi
+    - Tegne alle debug-vinduer og overlays
+    - Håndtere brugerinput (u, i, o, p, r, s, g, e, m, q)
+    - Stoppe robot-lytter, lukke vinduer og returnere til main-menuen
+
+    Returnerer:
+        None - funktionen afslutter kun når brugeren går tilbage til menuen.
+    """
     global cam, robot_process
 
     print("\n[QC] Starting QC pipeline...")
