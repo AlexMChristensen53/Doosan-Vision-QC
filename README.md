@@ -16,12 +16,13 @@ Python 3.12+ is not supported due to DepthAI compatibility issues.
 ### 1. Create a virtual environment
 
 **Windows**
-1. python -3.11 -m venv venv
-2. Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+1. py -3.11 -m venv venv
+2. Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass
 3. .\venv\Scripts\activate
 
 ### 2. Install dependencies
-pip install -r requirements.txt
+1. pip install -r requirements.txt
+2. pip install "numpy<2" --force-reinstall
 
 ---
 
@@ -55,16 +56,6 @@ Doosan-Vision-QC/
 ├─ requirements.txt         # Python dependencies
 └─ README.md
 ```
-
----
-
-## Quick Start
-
-
-### 1. Install dependencies
-bash
-pip install -r requirements.txt
-
 
 ---
 

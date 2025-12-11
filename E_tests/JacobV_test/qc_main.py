@@ -93,7 +93,6 @@ def start_robot_listener():
     print(f"[ROBOT] Starting robot listener: {robot_script}")
     return subprocess.Popen(
         [sys.executable, str(robot_script)]
-        # NO stdout/stderr redirection while we debug
     )
 
 
@@ -171,7 +170,7 @@ def draw_overall_with_id(img, form_results, final_results):
 # ======================================================
 # CAMERA INSTANCE (device is NOT started yet)
 # ======================================================
-cam = OakCamera((1920, 1080))   # created only once
+cam = OakCamera((1920, 1080)) 
 robot_process = None
 
 DISPLAY_W = 640
